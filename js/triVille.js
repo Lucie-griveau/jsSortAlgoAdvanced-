@@ -61,8 +61,25 @@ function getArrayCsv(csv) {
  * @returns la distance qui sépare la ville de Grenoble
  */
 function distanceFromGrenoble(ville) {
-    console.log('implement me !');
-    return 0;
+    const lat1 = 45.166667; //latitudeGrenoble
+    const lon1 = 5.716667; //longitudeGrenoble
+    const lat2 = ville.latitude;
+    const lon2 = ville.longitude;
+
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const d = R * c; // in metres
+
+    return d;
 }
 
 /**
@@ -73,8 +90,9 @@ function distanceFromGrenoble(ville) {
  * @return vrai si la ville i est plus proche
  */
 function isLess(i, j) {
-    console.log('implement me !');
-    return true;
+    if (i.distanceFromGrenoble < j.distanceFromGrenoble) {
+        return true;
+    }
 }
 
 /**
@@ -83,62 +101,179 @@ function isLess(i, j) {
  * @param {*} j 
  */
 function swap(i, j) {
-    console.log('implement me !');
+    let tmp = listVille[i];
+    listVille[i] = listVille[j];
+    listVille[j] = tmp;
 }
 
 function sort(type) {
     switch (type) {
         case 'insert':
-            insertsort();
+            insertsort(listVille); // working
             break;
         case 'select':
-            selectionsort();
+            selectionsort(listVille); // working
             break;
         case 'bubble':
-            bubblesort();
+            bubblesort(listVille); // working
             break;
         case 'shell':
-            shellsort();
+            shellsort(listVille); // working
             break;
         case 'merge':
-            mergesort();
+            listVille = mergesort(listVille); // working
             break;
         case 'heap':
-            heapsort();
+            heapsort(listVille, 0, listVille.length -1);
             break;
         case 'quick':
-            quicksort();
+            quicksort(listVille); // working
             break;
     }
 }
 
-function insertsort() {
-    console.log("insertsort - implement me !");
+function insertsort(table) {
+    for (let i = 0; i < table.length; i++) {
+        let temp = table[i]
+        let j = i
+        while (j > 0 && isLess(temp, table[j - 1])) { // temp < table[j - 1] ==> isLess(i, j) with i.distanceFromGrenoble < j.distanceFromGrenoble
+            //table[j] = table[j-1]
+            swap(j, j-1)
+            j = j - 1
+        }
+        table[j] = temp
+    }
 }
 
-function selectionsort() {
-    console.log("selectionsort - implement me !");
+function selectionsort(table) {
+    for (let i = 0; i < table.length; i++) {
+        let min = i
+        for (let j = i + 1; j < table.length; j++) {
+            if (isLess(table[j], table[min])) {         // table[j] < table[min]
+                min = j
+            }
+        }
+        swap(i, min)
+    }
 }
 
-function bubblesort() {
-    console.log("bubblesort - implement me !");
+function bubblesort(table) {
+    let passage = 0
+    let permut = true;
+    while (permut) {
+        permut = false
+        for (let i = passage; i < table.length - 1; i++) {
+            if (isLess(table [i + 1], table[i])){       // table [i + 1] < table[i]
+                swap(i, i + 1)
+                permut = true
+            }
+        }
+    }
 }
 
-function shellsort() {
-    console.log("shellsort - implement me !");
+function shellsort(table) {
+    let length = table.length
+    let n = 0
+    while (n < length) {
+        n = 3 * n + 1
+    }
+    while (n != 0) {
+        n = Math.floor(n / 3)
+        for (let i = n; i < length; i++) {
+            let value = table[i]
+            let j = i
+            while (j > n - 1 && isLess(value, table[j - n])){ // value < table[j - n]
+                swap(j, j - n)
+                j = j - n
+            }
+            table[j] = value
+        }
+    }
 }
 
-function mergesort() {
-    console.log("mergesort - implement me !");
+function mergesort(table) { // mergesort(table, start = 0, end = table.length -1)
+    let n = table.length
+    if (n <= 1) {
+        return table
+    } else {
+        // let left = mergesort(table.slice(0, Math.floor(n / 2)))
+        // let right = mergesort(table.slice(Math.floor(n / 2), n))
+        // return merge(left, right)
+        return merge(
+            mergesort(table.slice(0, Math.floor(n / 2))),
+            mergesort(table.slice(Math.floor(n / 2), n))
+        )
+    }
 }
 
-
-function heapsort() {
-    console.log("heapsort - implement me !");
+function merge(left, right) {
+    if (left.length === 0) {
+        return right
+    } else if (right.length === 0) {
+        return left
+    } else if (isLess(left[0], right[0])) {       // left[0] <= right[0]
+        return [left[0]].concat(merge(left.slice(1, left.length), right))
+    } else {
+        return [right[0]].concat(merge(left, right.slice(1, right.length)))
+    }
 }
 
-function quicksort() {
-    console.log("quicksort - implement me !");
+function heapsort(table) {
+    organize(table)
+    for (let i = table.length - 1; i > 0; i--) {
+        swap(0, i)
+        down(table, i, 0)
+    }
+}
+
+function organize(table) {
+    for (let i = 0; i < table.length - 1; i++) {
+        up(table, i)
+    }
+}
+
+function up(table, index) {
+    if (isLess(table[Math.floor(index / 2)], table[index])){    // table[Math.floor(index / 2)] < table[index]
+        swap(index, Math.floor(index / 2))
+        up(table, Math.floor(index / 2))
+    }
+}
+
+function down(table, element, index) {
+    let formule = 2 * index + 1
+    let max
+    if (formule < element) {
+        if (isLess(table[2 * index], table[formule])) {             // table[2 * index] < table[formule]
+            max = formule
+        } else {
+            max = 2 * index
+        }
+        if (isLess(table[index], table[max])) {                     // table[index] < table[max]
+            swap(max, index)
+            down(table, element, max)
+        }
+    }
+}
+
+function quicksort(table, first = 0, last = table.length - 1) {
+    if (first < last) {
+        let pi = part(table, first, last)
+        quicksort(table, first, pi - 1)
+        quicksort(table, pi + 1, last)
+    }
+}
+
+function part(table, first, last) {
+    let pivot = last
+    let j = first
+    for (let i = first; i < last; i++) {
+        if (isLess(table[i], table[pivot])) { // table[i] <= table[pivot]
+            swap(i, j)
+            j = j + 1
+        }
+    }
+    swap(last, j)
+    return j
 }
 
 /** MODEL */
